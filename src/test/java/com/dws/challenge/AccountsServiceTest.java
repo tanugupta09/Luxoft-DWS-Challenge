@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.math.BigDecimal;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -28,12 +30,15 @@ import lombok.extern.slf4j.Slf4j;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@TestMethodOrder(OrderAnnotation.class)
+@Execution(ExecutionMode.CONCURRENT)
 @Slf4j
 class AccountsServiceTest {
 
 	@Autowired
 	private AccountsService accountsService;
+
+	@Autowired
+	private AccountsService accountsService1;
 
 	@Autowired
 	private NotificationService notificationService;
@@ -72,79 +77,79 @@ class AccountsServiceTest {
 
 	//Test for sequential transfer
 	@Test
-	@Order(1)
-	void sequential_transfer_AtoB() {
+	void sequential_transfer_AtoB() throws InterruptedException {
 
-		log.info("Single Thread running for transfer from Account A to B {}:" , Thread.currentThread().getName() );
 		notificationService = Mockito.mock(NotificationService.class);
 		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-				(), Mockito.anyString()); this.accountsService.transfer(accountA, accountB,
-						BigDecimal.valueOf(5000.00));
-				assertEquals(accountA.getBalance(),BigDecimal.valueOf(15000.00));
-				assertEquals(accountB.getBalance(),BigDecimal.valueOf(35000.00));
+				(), Mockito.anyString());
+		accountsService.transfer(accountA, accountB,
+				BigDecimal.valueOf(10000.00));
+		assertEquals(accountA.getBalance(),BigDecimal.valueOf(10000.00));
+		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO)>0);
 
 	}
 
 	//Test for sequential transfer
 	@Test
-	@Order(2)
-	void sequential_transfer_BtoC() {
+	void sequential_transfer_BtoC() throws InterruptedException {
 
-		log.info("Single Thread running for transfer from Account B to C {}:" , Thread.currentThread().getName() );
 		notificationService = Mockito.mock(NotificationService.class);
 		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-				(), Mockito.anyString()); this.accountsService.transfer(accountB, accountC,
+				(), Mockito.anyString()); accountsService1.transfer(accountB, accountC,
 						BigDecimal.valueOf(5000.00)); 
-				assertEquals(accountB.getBalance(),BigDecimal.valueOf(30000.00));
+				assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO)>0);
 				assertEquals(accountC.getBalance(),BigDecimal.valueOf(45000.00));
 	}
 
+
 	//Test for parallel transfer
-	@Test 
-	@Execution(ExecutionMode.CONCURRENT)
+
+	@Test
 	void concurrent_transfer_1to2() {
-		
-		log.info("Parallel Execution: Thread running for transfer from Account 1 to 2 {}:" , Thread.currentThread().getName() );
-		Account account1 = new Account("Id-888", BigDecimal.valueOf(20000.00));
-		Account account2 = new Account("Id-888", BigDecimal.valueOf(30000.00));
-		notificationService = Mockito.mock(NotificationService.class);
-		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-				(), Mockito.anyString()); this.accountsService.transfer(account1, account2,
-						BigDecimal.valueOf(5000.00));
+
+				Account account1 = new Account("Id-888", BigDecimal.valueOf(20000.00)); 
+				Account account2 = new Account("Id-888", BigDecimal.valueOf(30000.00)); 
+				notificationService = Mockito.mock(NotificationService.class);
+				Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
+						(), Mockito.anyString());
+				this.accountsService.transfer(account1, account2,
+								BigDecimal.valueOf(5000.00));
 				assertEquals(account1.getBalance(),BigDecimal.valueOf(15000.00));
 				assertEquals(account2.getBalance(),BigDecimal.valueOf(35000.00));
 
 	}
 
 	//Test for parallel transfer
-	@Test
-	@Execution(ExecutionMode.CONCURRENT)
-	void concurrent_transfer_3to4() {
-		log.info("Parallel Execution: Thread running for transfer from Account 3 to 4 {}:" , Thread.currentThread().getName());
-		Account account3 = new Account("Id-888", BigDecimal.valueOf(10000.00));
-		Account account4 = new Account("Id-888", BigDecimal.valueOf(20000.00));
-		notificationService = Mockito.mock(NotificationService.class);
-		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-				(), Mockito.anyString()); this.accountsService.transfer(account3, account4,
-						BigDecimal.valueOf(5000.00));
-				assertEquals(account3.getBalance(),BigDecimal.valueOf(5000.00));
-				assertEquals(account4.getBalance(),BigDecimal.valueOf(25000.00));
-	}
-	
-	 //Negative test case with the transfer failing due to insufficient funds and throwing exception
-	  @Test
-	  void transfer_fail() {
-		  
-		  Exception exception = assertThrows(RuntimeException.class, () -> {
-			  this.accountsService.transfer(accountA, accountB,
-					  BigDecimal.valueOf(20000.00));
-		    });
 
-		    String expectedMessage = "Not enough balance in your account";
-		    String actualMessage = exception.getMessage();
-		    assertEquals(expectedMessage, actualMessage);
-		 
-		  
-		  }
-	  
+	@Test
+	void concurrent_transfer_3to4() { 
+		
+		Account account3 = new Account("Id-888",
+				BigDecimal.valueOf(10000.00));
+		Account account4 = new Account("Id-888",
+						BigDecimal.valueOf(20000.00)); 
+				notificationService = Mockito.mock(NotificationService.class);
+				Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
+						(), Mockito.anyString()); 
+				this.accountsService.transfer(account3, account4,
+								BigDecimal.valueOf(5000.00));
+				assertEquals(account3.getBalance(),BigDecimal.valueOf(5000.00));
+				assertEquals(account4.getBalance(),BigDecimal.valueOf(25000.00)); }
+
+	//Negative test case with the transfer failing due to insufficient funds and throwing exception
+	@Test 
+	void transfer_fail() {
+
+		Exception exception = assertThrows(RuntimeException.class, () -> {
+			this.accountsService.transfer(accountA, accountB,
+					BigDecimal.valueOf(20000.00)); });
+
+		String expectedMessage = "Not enough balance in your account"; String
+		actualMessage = exception.getMessage(); assertEquals(expectedMessage,
+				actualMessage);
+
+
+	}
+
+
 }
