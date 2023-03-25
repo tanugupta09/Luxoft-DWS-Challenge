@@ -73,7 +73,7 @@ class AccountsServiceTest {
 	//Test for sequential transfer
 	@Test
 	void sequential_transfer_AtoB() throws InterruptedException {
-
+		log.info("concurrent_transfer_AtoB {}", Thread.currentThread().getName());
 		notificationService = Mockito.mock(NotificationService.class);
 		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
 				(), Mockito.anyString());
@@ -81,29 +81,31 @@ class AccountsServiceTest {
 				BigDecimal.valueOf(10000.00));
 		assertEquals(accountA.getBalance(),BigDecimal.valueOf(10000.00));
 		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO)>0);
+	
 
-	}
+	} 
 
 	//Test for sequential transfer
 	@Test
 	void sequential_transfer_BtoC() throws InterruptedException {
-
+		log.info("concurrent_transfer_BtoC {}", Thread.currentThread().getName());
 		notificationService = Mockito.mock(NotificationService.class);
 		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
 				(), Mockito.anyString()); accountsService1.transfer(accountB, accountC,
 						BigDecimal.valueOf(5000.00)); 
 				assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO)>0);
+			
 				assertEquals(accountC.getBalance(),BigDecimal.valueOf(45000.00));
-	}
+	} 
 
 
 	//Test for parallel transfer
 
 	@Test
 	void concurrent_transfer_1to2() {
-
-				Account account1 = new Account("Id-888", BigDecimal.valueOf(20000.00)); 
-				Account account2 = new Account("Id-888", BigDecimal.valueOf(30000.00)); 
+				log.info("concurrent_transfer_1to2 {}", Thread.currentThread().getName());
+				Account account1 = new Account("Id-111", BigDecimal.valueOf(20000.00)); 
+				Account account2 = new Account("Id-222", BigDecimal.valueOf(30000.00)); 
 				notificationService = Mockito.mock(NotificationService.class);
 				Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
 						(), Mockito.anyString());
@@ -118,10 +120,10 @@ class AccountsServiceTest {
 
 	@Test
 	void concurrent_transfer_3to4() { 
-		
-		Account account3 = new Account("Id-888",
+		log.info("concurrent_transfer_3to4 {}", Thread.currentThread().getName());
+		Account account3 = new Account("Id-333",
 				BigDecimal.valueOf(10000.00));
-		Account account4 = new Account("Id-888",
+		Account account4 = new Account("Id-444",
 						BigDecimal.valueOf(20000.00)); 
 				notificationService = Mockito.mock(NotificationService.class);
 				Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
@@ -144,7 +146,7 @@ class AccountsServiceTest {
 				actualMessage);
 
 
-	}
+	} 
 
 
 }

@@ -1,6 +1,9 @@
 package com.dws.challenge.service;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,12 @@ public class AccountsService {
 	@Getter
 	private final NotificationService notificationService;
 
+	private  ReentrantLock lock = new ReentrantLock();
+
+	ConcurrentHashMap<String, Void> concurrentHashMap = new ConcurrentHashMap<String, Void>();
+
+	private static ThreadLocal<List<Account>> threadLocal = new ThreadLocal<>();
+
 	@Autowired
 	public AccountsService(AccountsRepository accountsRepository, NotificationService notificationService) {
 		this.accountsRepository = accountsRepository;
@@ -43,22 +52,21 @@ public class AccountsService {
 
 	//Here , synchronized transfer takes place between the accounts.One thread operating on the account at a time.
 	public void transfer(Account accountFrom, Account accountTo ,BigDecimal amount) {
-		
-		synchronized (Account.class) {
-		
-			log.info("Thread for transfer begins {}:" , Thread.currentThread().getName());
-			if(accountFrom.getBalance().compareTo(amount)>0) {
-				accountFrom.setBalance(accountFrom.getBalance().subtract(amount));
-				accountTo.setBalance(accountTo.getBalance().add(amount));
-				notificationService.notifyAboutTransfer(accountFrom, "Money deducted from your account:" + amount);
-				notificationService.notifyAboutTransfer(accountTo, "Money deposited in your account:" + amount);
-				log.info("Thread for transfer ends here {}:" , Thread.currentThread().getName());
+		if(accountFrom.getBalance().compareTo(amount)>0) {
+			synchronized (accountFrom.getAccountId()) {
+				synchronized (accountTo.getAccountId()) {
+					log.info("thread begins {}:" , Thread.currentThread().getName());
+					accountFrom.setBalance(accountFrom.getBalance().subtract(amount));
+					accountTo.setBalance(accountTo.getBalance().add(amount));
+					notificationService.notifyAboutTransfer(accountFrom, "Money deducted from your account:" + amount);
+					notificationService.notifyAboutTransfer(accountTo, "Money deposited in your account:" + amount);
+					log.info("thread ends {}:" , Thread.currentThread().getName());
+				}
+			}
 		}
-		 else {
+		else {
 			throw new InsufficientFundsException("Not enough balance in your account");
 		}
-	
-		}
 	}
-	
+
 }
