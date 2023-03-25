@@ -18,6 +18,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.dws.challenge.domain.Account;
 import com.dws.challenge.exception.DuplicateAccountIdException;
+import com.dws.challenge.exception.InsufficientFundsException;
 import com.dws.challenge.service.AccountsService;
 import com.dws.challenge.service.NotificationService;
 
@@ -38,13 +39,9 @@ class AccountsServiceTest {
 	@Autowired
 	private NotificationService notificationService;
 
-	private static Account accountA = new Account("Id-123", BigDecimal.valueOf(20000.00));
-	private static Account accountB = new Account("Id-345", BigDecimal.valueOf(30000.00));
-	private static Account accountC = new Account("Id-555", BigDecimal.valueOf(40000.00));
-
-
-
-
+	private static Account accountA = new Account("Id-AAA", BigDecimal.valueOf(70000.00));
+	private static Account accountB = new Account("Id-BBB", BigDecimal.valueOf(50000.00));
+	private static Account accountC = new Account("Id-CCC", BigDecimal.valueOf(40000.00));
 
 	void addAccount() {
 		Account account = new Account("Id-123");
@@ -68,100 +65,121 @@ class AccountsServiceTest {
 		}
 	}
 
-
-
-	//Test for sequential transfer
+	// Test for sequential transfer
 	@Test
 	void sequential_transfer_AtoB() throws InterruptedException {
 		log.info("concurrent_transfer_AtoB {}", Thread.currentThread().getName());
 		notificationService = Mockito.mock(NotificationService.class);
-		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-				(), Mockito.anyString());
-		accountsService.transfer(accountA, accountB,
-				BigDecimal.valueOf(10000.00));
-		assertThat(accountA.getBalance().compareTo(BigDecimal.ZERO)>0);
-		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO)>0);
-	
+		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any(), Mockito.anyString());
+		accountsService.transfer(accountA, accountB, BigDecimal.valueOf(10000.00));
+		assertThat(accountA.getBalance().compareTo(BigDecimal.ZERO) > 0);
+		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO) > 0);
 
-	} 
-	
+	}
+
 	@Test
 	void sequential_transfer_BtoA() throws InterruptedException {
 		log.info("concurrent_transfer_BtoA {}", Thread.currentThread().getName());
 		notificationService = Mockito.mock(NotificationService.class);
-		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-				(), Mockito.anyString());
-		accountsService.transfer(accountB, accountA,
-				BigDecimal.valueOf(10000.00));
-		assertThat(accountA.getBalance().compareTo(BigDecimal.ZERO)>0);
-		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO)>0);
+		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any(), Mockito.anyString());
+		accountsService.transfer(accountB, accountA, BigDecimal.valueOf(10000.00));
+		assertThat(accountA.getBalance().compareTo(BigDecimal.ZERO) > 0);
+		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO) > 0);
+
+	}
+
+	@Test
+	void sequential_transfer_AtoC() throws InterruptedException {
+		log.info("concurrent_transfer_AtoC {}", Thread.currentThread().getName());
+		notificationService = Mockito.mock(NotificationService.class);
+		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any(), Mockito.anyString());
+		accountsService.transfer(accountA, accountC, BigDecimal.valueOf(10000.00));
+		assertThat(accountA.getBalance().compareTo(BigDecimal.ZERO) > 0);
+		assertThat(accountC.getBalance().compareTo(BigDecimal.ZERO) > 0);
+
+	}
 	
+	@Test
+	void sequential_transfer_CtoA() throws InterruptedException {
+		log.info("concurrent_transfer_CtoA {}", Thread.currentThread().getName());
+		notificationService = Mockito.mock(NotificationService.class);
+		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any(), Mockito.anyString());
+		accountsService.transfer(accountC, accountA, BigDecimal.valueOf(1000.00));
+		assertThat(accountA.getBalance().compareTo(BigDecimal.ZERO) > 0);
+		assertThat(accountC.getBalance().compareTo(BigDecimal.ZERO) > 0);
 
-	} 
+	}
 
 
-	//Test for sequential transfer
+	// Test for sequential transfer
 	@Test
 	void sequential_transfer_BtoC() throws InterruptedException {
 		log.info("concurrent_transfer_BtoC {}", Thread.currentThread().getName());
 		notificationService = Mockito.mock(NotificationService.class);
-		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-				(), Mockito.anyString()); accountsService1.transfer(accountB, accountC,
-						BigDecimal.valueOf(5000.00)); 
-				assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO)>0);
-			
-				assertEquals(accountC.getBalance(),BigDecimal.valueOf(45000.00));
-	} 
-
-
-	//Test for parallel transfer
-
-	@Test
-	void concurrent_transfer_1to2() {
-				log.info("concurrent_transfer_1to2 {}", Thread.currentThread().getName());
-				Account account1 = new Account("Id-111", BigDecimal.valueOf(20000.00)); 
-				Account account2 = new Account("Id-222", BigDecimal.valueOf(30000.00)); 
-				notificationService = Mockito.mock(NotificationService.class);
-				Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-						(), Mockito.anyString());
-				this.accountsService.transfer(account1, account2,
-								BigDecimal.valueOf(5000.00));
-				assertEquals(account1.getBalance(),BigDecimal.valueOf(15000.00));
-				assertEquals(account2.getBalance(),BigDecimal.valueOf(35000.00));
-
+		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any(), Mockito.anyString());
+		accountsService1.transfer(accountB, accountC, BigDecimal.valueOf(5000.00));
+		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO) > 0);
+		assertThat(accountC.getBalance().compareTo(BigDecimal.ZERO) > 0);
 	}
 
-	//Test for parallel transfer
-
 	@Test
-	void concurrent_transfer_3to4() { 
-		log.info("concurrent_transfer_3to4 {}", Thread.currentThread().getName());
-		Account account3 = new Account("Id-333",
-				BigDecimal.valueOf(10000.00));
-		Account account4 = new Account("Id-444",
-						BigDecimal.valueOf(20000.00)); 
-				notificationService = Mockito.mock(NotificationService.class);
-				Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-						(), Mockito.anyString()); 
-				this.accountsService.transfer(account3, account4,
-								BigDecimal.valueOf(5000.00));
-				assertEquals(account3.getBalance(),BigDecimal.valueOf(5000.00));
-				assertEquals(account4.getBalance(),BigDecimal.valueOf(25000.00)); }
-
-	//Negative test case with the transfer failing due to insufficient funds and throwing exception
-	@Test 
-	void transfer_fail() {
-
-		Exception exception = assertThrows(RuntimeException.class, () -> {
-			this.accountsService.transfer(accountA, accountB,
-					BigDecimal.valueOf(20000.00)); });
-
-		String expectedMessage = "Not enough balance in your account"; String
-		actualMessage = exception.getMessage(); assertEquals(expectedMessage,
-				actualMessage);
+	void sequential_transfer_CtoB() throws InterruptedException {
+		log.info("concurrent_transfer_CtoB {}", Thread.currentThread().getName());
+		notificationService = Mockito.mock(NotificationService.class);
+		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any(), Mockito.anyString());
+		accountsService1.transfer(accountC, accountB, BigDecimal.valueOf(5000.00));
+		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO) > 0);
+		assertThat(accountC.getBalance().compareTo(BigDecimal.ZERO) > 0);
+	}
 
 
-	} 
-
-
+	
+	  //Test for parallel transfer
+	  
+	  @Test void concurrent_transfer_1to2() {
+	  log.info("concurrent_transfer_1to2 {}", Thread.currentThread().getName());
+	  Account account1 = new Account("Id-111", BigDecimal.valueOf(20000.00));
+	  Account account2 = new Account("Id-222", BigDecimal.valueOf(30000.00));
+	  notificationService = Mockito.mock(NotificationService.class);
+	  Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
+	  (), Mockito.anyString()); this.accountsService.transfer(account1, account2,
+	  BigDecimal.valueOf(5000.00));
+	  assertEquals(account1.getBalance(),BigDecimal.valueOf(15000.00));
+	  assertEquals(account2.getBalance(),BigDecimal.valueOf(35000.00));
+	  
+	  }
+	  
+	  //Test for parallel transfer
+	  
+	  @Test void concurrent_transfer_3to4() {
+	  log.info("concurrent_transfer_3to4 {}", Thread.currentThread().getName());
+	  Account account3 = new Account("Id-333", BigDecimal.valueOf(10000.00));
+	  Account account4 = new Account("Id-444", BigDecimal.valueOf(20000.00));
+	  notificationService = Mockito.mock(NotificationService.class);
+	  Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
+	  (), Mockito.anyString()); this.accountsService.transfer(account3, account4,
+	  BigDecimal.valueOf(5000.00));
+	  assertEquals(account3.getBalance(),BigDecimal.valueOf(5000.00));
+	  assertEquals(account4.getBalance(),BigDecimal.valueOf(25000.00)); }
+	  
+	  //Negative test case with the transfer failing due to insufficient funds and throwing exception
+	  
+	  @Test 
+	  void transfer_fail() {
+	  
+		  Account accountA1 = new Account("Id-A1", BigDecimal.valueOf(10000.00));
+		  Account accountA2 = new Account("Id-A2", BigDecimal.valueOf(20000.00));
+		 
+	  Exception exception = assertThrows(InsufficientFundsException.class, () -> {
+	  this.accountsService.transfer(accountA1, accountA2,
+	  BigDecimal.valueOf(20000.00)); });
+	  
+	  String expectedMessage = "Not enough balance in your account"; String
+	  actualMessage = exception.getMessage(); assertEquals(expectedMessage,
+	  actualMessage);
+	  
+	  
+	  } 
+	  
+	 
 }

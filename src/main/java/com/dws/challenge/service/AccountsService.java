@@ -3,6 +3,7 @@ package com.dws.challenge.service;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,9 +54,12 @@ public class AccountsService {
 	//Here , synchronized transfer takes place between the accounts.One thread operating on the account at a time.
 	public void transfer(Account accountFrom, Account accountTo ,BigDecimal amount) {
 		
-		List<String> accountIds = List.of(accountFrom.getAccountId(),accountTo.getAccountId());
+		
+		LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<>();
+		queue.add(accountFrom.getAccountId());
+		queue.add(accountTo.getAccountId());
 		if(accountFrom.getBalance().compareTo(amount)>0) {
-			synchronized (accountIds) {
+			synchronized (queue) {
 				
 					log.info("thread begins {}:" , Thread.currentThread().getName());
 					accountFrom.setBalance(accountFrom.getBalance().subtract(amount));
