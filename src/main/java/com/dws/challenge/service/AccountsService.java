@@ -52,16 +52,18 @@ public class AccountsService {
 
 	//Here , synchronized transfer takes place between the accounts.One thread operating on the account at a time.
 	public void transfer(Account accountFrom, Account accountTo ,BigDecimal amount) {
+		
+		List<String> accountIds = List.of(accountFrom.getAccountId(),accountTo.getAccountId());
 		if(accountFrom.getBalance().compareTo(amount)>0) {
-			synchronized (accountFrom.getAccountId()) {
-				synchronized (accountTo.getAccountId()) {
+			synchronized (accountIds) {
+				
 					log.info("thread begins {}:" , Thread.currentThread().getName());
 					accountFrom.setBalance(accountFrom.getBalance().subtract(amount));
 					accountTo.setBalance(accountTo.getBalance().add(amount));
 					notificationService.notifyAboutTransfer(accountFrom, "Money deducted from your account:" + amount);
 					notificationService.notifyAboutTransfer(accountTo, "Money deposited in your account:" + amount);
 					log.info("thread ends {}:" , Thread.currentThread().getName());
-				}
+				
 			}
 		}
 		else {

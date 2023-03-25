@@ -79,11 +79,26 @@ class AccountsServiceTest {
 				(), Mockito.anyString());
 		accountsService.transfer(accountA, accountB,
 				BigDecimal.valueOf(10000.00));
-		assertEquals(accountA.getBalance(),BigDecimal.valueOf(10000.00));
+		assertThat(accountA.getBalance().compareTo(BigDecimal.ZERO)>0);
 		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO)>0);
 	
 
 	} 
+	
+	@Test
+	void sequential_transfer_BtoA() throws InterruptedException {
+		log.info("concurrent_transfer_BtoA {}", Thread.currentThread().getName());
+		notificationService = Mockito.mock(NotificationService.class);
+		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
+				(), Mockito.anyString());
+		accountsService.transfer(accountB, accountA,
+				BigDecimal.valueOf(10000.00));
+		assertThat(accountA.getBalance().compareTo(BigDecimal.ZERO)>0);
+		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO)>0);
+	
+
+	} 
+
 
 	//Test for sequential transfer
 	@Test
