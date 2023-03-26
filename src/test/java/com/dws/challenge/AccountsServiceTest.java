@@ -98,7 +98,7 @@ class AccountsServiceTest {
 		assertThat(accountC.getBalance().compareTo(BigDecimal.ZERO) > 0);
 
 	}
-	
+
 	@Test
 	void sequential_transfer_CtoA() throws InterruptedException {
 		log.info("concurrent_transfer_CtoA {}", Thread.currentThread().getName());
@@ -133,53 +133,53 @@ class AccountsServiceTest {
 	}
 
 
-	
-	  //Test for parallel transfer
-	  
-	  @Test void concurrent_transfer_1to2() {
-	  log.info("concurrent_transfer_1to2 {}", Thread.currentThread().getName());
-	  Account account1 = new Account("Id-111", BigDecimal.valueOf(20000.00));
-	  Account account2 = new Account("Id-222", BigDecimal.valueOf(30000.00));
-	  notificationService = Mockito.mock(NotificationService.class);
-	  Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-	  (), Mockito.anyString()); this.accountsService.transfer(account1, account2,
-	  BigDecimal.valueOf(5000.00));
-	  assertEquals(account1.getBalance(),BigDecimal.valueOf(15000.00));
-	  assertEquals(account2.getBalance(),BigDecimal.valueOf(35000.00));
-	  
-	  }
-	  
-	  //Test for parallel transfer
-	  
-	  @Test void concurrent_transfer_3to4() {
-	  log.info("concurrent_transfer_3to4 {}", Thread.currentThread().getName());
-	  Account account3 = new Account("Id-333", BigDecimal.valueOf(10000.00));
-	  Account account4 = new Account("Id-444", BigDecimal.valueOf(20000.00));
-	  notificationService = Mockito.mock(NotificationService.class);
-	  Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
-	  (), Mockito.anyString()); this.accountsService.transfer(account3, account4,
-	  BigDecimal.valueOf(5000.00));
-	  assertEquals(account3.getBalance(),BigDecimal.valueOf(5000.00));
-	  assertEquals(account4.getBalance(),BigDecimal.valueOf(25000.00)); }
-	  
-	  //Negative test case with the transfer failing due to insufficient funds and throwing exception
-	  
-	  @Test 
-	  void transfer_fail() {
-	  
-		  Account accountA1 = new Account("Id-A1", BigDecimal.valueOf(10000.00));
-		  Account accountA2 = new Account("Id-A2", BigDecimal.valueOf(20000.00));
-		 
-	  Exception exception = assertThrows(InsufficientFundsException.class, () -> {
-	  this.accountsService.transfer(accountA1, accountA2,
-	  BigDecimal.valueOf(20000.00)); });
-	  
-	  String expectedMessage = "Not enough balance in your account"; String
-	  actualMessage = exception.getMessage(); assertEquals(expectedMessage,
-	  actualMessage);
-	  
-	  
-	  } 
-	  
-	 
+
+	//Test for parallel transfer
+
+	@Test void concurrent_transfer_1to2() {
+		log.info("concurrent_transfer_1to2 {}", Thread.currentThread().getName());
+		Account account1 = new Account("Id-111", BigDecimal.valueOf(20000.00));
+		Account account2 = new Account("Id-222", BigDecimal.valueOf(30000.00));
+		notificationService = Mockito.mock(NotificationService.class);
+		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
+				(), Mockito.anyString()); this.accountsService.transfer(account1, account2,
+						BigDecimal.valueOf(5000.00));
+				assertEquals(account1.getBalance(),BigDecimal.valueOf(15000.00));
+				assertEquals(account2.getBalance(),BigDecimal.valueOf(35000.00));
+
+	}
+
+	//Test for parallel transfer
+
+	@Test void concurrent_transfer_3to4() {
+		log.info("concurrent_transfer_3to4 {}", Thread.currentThread().getName());
+		Account account3 = new Account("Id-333", BigDecimal.valueOf(10000.00));
+		Account account4 = new Account("Id-444", BigDecimal.valueOf(20000.00));
+		notificationService = Mockito.mock(NotificationService.class);
+		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any
+				(), Mockito.anyString()); this.accountsService.transfer(account3, account4,
+						BigDecimal.valueOf(5000.00));
+				assertEquals(account3.getBalance(),BigDecimal.valueOf(5000.00));
+				assertEquals(account4.getBalance(),BigDecimal.valueOf(25000.00)); }
+
+	//Negative test case with the transfer failing due to insufficient funds and throwing exception
+
+	@Test 
+	void transfer_fail() {
+
+		Account accountA1 = new Account("Id-A1", BigDecimal.valueOf(10000.00));
+		Account accountA2 = new Account("Id-A2", BigDecimal.valueOf(20000.00));
+
+		Exception exception = assertThrows(InsufficientFundsException.class, () -> {
+			this.accountsService.transfer(accountA1, accountA2,
+					BigDecimal.valueOf(20000.00)); });
+
+		String expectedMessage = "Not enough balance in your account";
+		String actualMessage = exception.getMessage(); 
+		assertEquals(expectedMessage,actualMessage);
+
+
+	} 
+
+
 }

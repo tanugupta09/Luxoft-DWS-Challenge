@@ -1,10 +1,6 @@
 package com.dws.challenge.service;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,12 +27,6 @@ public class AccountsService {
 	@Getter
 	private final NotificationService notificationService;
 
-	private  ReentrantLock lock = new ReentrantLock();
-
-	ConcurrentHashMap<String, Void> concurrentHashMap = new ConcurrentHashMap<String, Void>();
-
-	private static ThreadLocal<List<Account>> threadLocal = new ThreadLocal<>();
-
 	@Autowired
 	public AccountsService(AccountsRepository accountsRepository, NotificationService notificationService) {
 		this.accountsRepository = accountsRepository;
@@ -51,7 +41,7 @@ public class AccountsService {
 		return this.accountsRepository.getAccount(accountId);
 	}
 
-	//Here , synchronized transfer takes place between the accounts.One thread operating on the account at a time.
+	//Method for amount transfer between two accounts.
 	public void transfer(Account accountFrom, Account accountTo ,BigDecimal amount) {
 		
 		String minId = null;
@@ -67,11 +57,14 @@ public class AccountsService {
 			maxId = accountFrom.getAccountId();
 		}
 		
+		//Using synchronization on minimum and maximum ids so that a deadlock never occurs in a situation like:
+		//transfer from Account A to B and Account B to A in parallel execution.
 		
 		if(accountFrom.getBalance().compareTo(amount)>0) {
 			synchronized (minId) {
+				log.info("thread {} begins: inside fromAccount {}:" , Thread.currentThread().getName() ,minId);
 				synchronized (maxId) {
-					log.info("thread begins {}:" , Thread.currentThread().getName());
+					log.info("thread {} inside toAccount {}:" ,Thread.currentThread().getName(), maxId);
 					accountFrom.setBalance(accountFrom.getBalance().subtract(amount));
 					accountTo.setBalance(accountTo.getBalance().add(amount));
 					notificationService.notifyAboutTransfer(accountFrom, "Money deducted from your account:" + amount);
