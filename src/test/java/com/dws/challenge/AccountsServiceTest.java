@@ -34,9 +34,6 @@ class AccountsServiceTest {
 	private AccountsService accountsService;
 
 	@Autowired
-	private AccountsService accountsService1;
-
-	@Autowired
 	private NotificationService notificationService;
 
 	private static Account accountA = new Account("Id-AAA", BigDecimal.valueOf(70000.00));
@@ -117,7 +114,7 @@ class AccountsServiceTest {
 		log.info("concurrent_transfer_BtoC {}", Thread.currentThread().getName());
 		notificationService = Mockito.mock(NotificationService.class);
 		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any(), Mockito.anyString());
-		accountsService1.transfer(accountB, accountC, BigDecimal.valueOf(5000.00));
+		accountsService.transfer(accountB, accountC, BigDecimal.valueOf(5000.00));
 		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO) > 0);
 		assertThat(accountC.getBalance().compareTo(BigDecimal.ZERO) > 0);
 	}
@@ -127,7 +124,7 @@ class AccountsServiceTest {
 		log.info("concurrent_transfer_CtoB {}", Thread.currentThread().getName());
 		notificationService = Mockito.mock(NotificationService.class);
 		Mockito.doNothing().when(notificationService).notifyAboutTransfer(Mockito.any(), Mockito.anyString());
-		accountsService1.transfer(accountC, accountB, BigDecimal.valueOf(5000.00));
+		accountsService.transfer(accountC, accountB, BigDecimal.valueOf(5000.00));
 		assertThat(accountB.getBalance().compareTo(BigDecimal.ZERO) > 0);
 		assertThat(accountC.getBalance().compareTo(BigDecimal.ZERO) > 0);
 	}
